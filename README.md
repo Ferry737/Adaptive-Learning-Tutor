@@ -1,47 +1,162 @@
-# Adaptive-Learning-Tutor
+# 🎓 Adaptive Learning Tutor
 
-AI-powered adaptive learning tutor with Socratic dialogue system
+An AI-powered adaptive learning platform with Socratic dialogue system, gamification, and professional UI/UX.
 
-## Features
+## 🌟 Features
 
-- 🧠 **Socratic Dialogue**: Interactive learning through questions and answers
-- 🎮 **Gamification**: XP, levels, streaks, and achievements
-- 📚 **Adaptive Learning**: Spaced repetition and concept extraction
-- 🎯 **ADHD-Friendly**: Low friction, instant feedback, engaging interface
-- 📱 **Responsive**: Works on all devices
+### 🧠 AI-Powered Learning
+- **Socratic Dialogue**: Interactive learning through questions and answers
+- **Adaptive Learning**: Personalized learning paths based on performance
+- **Real-time Feedback**: Instant feedback on responses and progress
+- **Concept Extraction**: AI analyzes and extracts key learning concepts
 
-## Tech Stack
+### 🎮 Gamification System
+- **XP & Levels**: Gain experience points and level up
+- **Streaks**: Maintain learning streaks for motivation
+- **Achievements**: Unlock achievements as you progress
+- **Progress Tracking**: Visual progress bars and analytics
 
+### 🎯 ADHD-Friendly Design
+- **Low Friction**: Minimal interface distractions
+- **Instant Feedback**: Immediate response to user actions
+- **Engaging Interface**: Colorful, interactive design
+- **Responsive**: Works perfectly on all devices
+
+### 🛠️ Technical Stack
 - **Frontend**: Next.js 14, React, TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **API**: Next.js API routes
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Backend**: Express.js API server
 - **State Management**: React hooks
+- **Icons**: Lucide React
 
-## Getting Started
+## 🚀 Getting Started
 
-First, run the development server:
+### Prerequisites
+- Node.js 18+ installed
+- npm or yarn package manager
 
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Ferry737/Adaptive-Learning-Tutor.git
+cd Adaptive-Learning-Tutor
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Start the development server:
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### API Server Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Navigate to the backend directory:
+```bash
+cd backend
+npm install
+node server.js
+```
 
-## Learn More
+2. The API will run on [http://localhost:5000](http://localhost:5000)
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+├── src/
+│   ├── components/          # React components
+│   │   ├── dashboard.tsx   # Main dashboard
+│   │   ├── ai-tutor.tsx    # AI tutor interface
+│   │   └── ui/            # UI components
+│   ├── lib/               # Utility functions
+│   ├── App.tsx           # Main app component
+│   └── main.tsx          # Entry point
+├── backend/              # Express.js API server
+│   ├── server.js         # Main server file
+│   └── package.json      # Backend dependencies
+├── public/               # Static assets
+└── README.md            # This file
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🎮 Usage
 
-## Deploy on Vercel
+### Dashboard
+- View learning progress and statistics
+- Access different learning modules
+- Track achievements and streaks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### AI Tutor
+- Interactive learning through questions
+- Get personalized feedback
+- Explore concepts in depth
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Learning Paths
+- Follow structured learning sequences
+- Track completion progress
+- Unlock new modules as you advance
+
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env.local` file in the root directory:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+```
+
+### Customization
+- Modify `tailwind.config.js` for styling
+- Update `src/components/` for UI changes
+- Adjust `backend/server.js` for API endpoints
+
+## 🚀 Deployment
+
+### GitHub Auto-Deploy
+This project is configured with GitHub auto-deploy. When you push changes, they will be automatically deployed.
+
+### Manual Deployment
+```bash
+# Build the project
+npm run build
+
+# Start production server
+npm start
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Commit and push
+5. Create a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+## 🎯 Roadmap
+
+- [ ] Add more AI models
+- [ ] Implement user authentication
+- [ ] Add progress persistence
+- [ ] Create mobile app
+- [ ] Add multiplayer features
+- [ ] Integrate with learning management systems
+
+## 📞 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Check the documentation
+- Join our community discussions
+
+---
+
+**Built with ❤️ using Next.js, React, and AI**
