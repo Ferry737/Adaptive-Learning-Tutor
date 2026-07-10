@@ -1,0 +1,33 @@
+🚀 GitHub Auto-Deploy Instructions for adaptive-learning-tutor
+==================================================
+
+This project has been detected and is ready for GitHub deployment.
+
+📋 Project Details:
+- Name: adaptive-learning-tutor
+- Directory: /opt/data/adaptive-learning-tutor
+- Detection time: 2026-07-10 09:13:27
+
+🎯 Next Steps:
+1. Set up GitHub authentication:
+   export GITHUB_TOKEN="your..."
+   
+2. Deploy to GitHub:
+   cd "/opt/data/adaptive-learning-tutor"
+   /opt/data/github-auto-deploy.sh deploy "adaptive-learning-tutor" basic
+
+📝 Available Deployment Commands:
+- Deploy specific project: /opt/data/github-auto-deploy.sh deploy "adaptive-learning-tutor" basic
+- Deploy all ready projects: /opt/data/github-auto-deploy.sh deploy-all
+- Check status: /opt/data/comprehensive-monitoring.sh status
+
+🔐 Authentication Required:
+- GitHub CLI must be authenticated
+- GITHUB_TOKEN environment variable must be set
+- Use: gh auth login --with-token
+
+💡 Tips:
+- Projects are automatically detected when created
+- No manual intervention needed for detection
+- Authentication required only for deployment
+
