@@ -1,4 +1,9 @@
+# Deployment Instructions for adaptive-learning-tutor
 Project: adaptive-learning-tutor
-Type: React
-GitHub Username: to
-Created: 2026-07-10 20:10:14
+Location: /opt/data/adaptive-learning-tutor/
+GitHub Repository: https://github.com/Ferry737/adaptive-learning-tutor
+
+To deploy manually:
+cd /opt/data/adaptive-learning-tutor/
+source /opt/data/.github-auto-deploy
+auto-deploy adaptive-learning-tutor nextjs
