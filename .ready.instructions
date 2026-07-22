@@ -1,9 +1,0 @@
-# Deployment Instructions for adaptive-learning-tutor
-Project: adaptive-learning-tutor
-Location: /opt/data/adaptive-learning-tutor/
-GitHub Repository: https://github.com/Ferry737/adaptive-learning-tutor
-
-To deploy manually:
-cd /opt/data/adaptive-learning-tutor/
-source /opt/data/.github-auto-deploy
-auto-deploy adaptive-learning-tutor nextjs

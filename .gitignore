@@ -1,108 +1,81 @@
-# Dependencies
+# Dependencies (any node_modules variant, incl. partial/broken install dirs)
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+node_modules.*/
+**/node_modules/
+**/node_modules.*/
+.pnpm-store/
+.pnpm*/
 
-# Next.js
+# Broken/partial install leftovers from failed pnpm runs
+*.broken*/
+*.partial/
+*_partial/
+*_tmp*
+
+# Build outputs
+dist/
+build/
 .next/
 out/
-
-# Production
-build/
-dist/
+*.tsbuildinfo
 
 # Environment variables
-.env*.local
 .env
+.env.local
+.env.*.local
+.env.*.production
 
-# Vite
-vite.config.ts-saved
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# Logs
-*.log
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-
-# nyc test coverage
-.nyc_output
-
-# Dependency directories
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# yarn v2
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
+# Database
+*.db
+*.db-shm
+*.db-wal
+.prisma/migrations/
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Project-specific
-gh.tar.gz
-gh_*
-test-direct-interpolation/
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Temporary files
+.tmp/
+*.tmp
+
+# Lock files (yarn/npm not used). pnpm-lock.yaml excluded: the current copy is a
+# leftover from a failed install run and is not valid — regenerate after a clean install.
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Prisma
+prisma/migrations/
+.prisma
+
+# Cache
+.cache/
+
+# Claude Code local agent artifacts (working files, not part of the app)
+.claude/
+
+# gstack skill artifacts (QA reports, timelines, etc.)
+.gstack/
+
+# Local memory/runtime state
+.env.local
+.env.*.local

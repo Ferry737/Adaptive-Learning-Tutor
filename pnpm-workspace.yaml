@@ -1,0 +1,9 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+# The workspace currently lives on an exFAT volume, which does not provide the
+# symlink semantics required by pnpm's default isolated linker.
+nodeLinker: hoisted
+packageImportMethod: copy
+injectWorkspacePackages: true

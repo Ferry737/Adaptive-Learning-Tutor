@@ -1,0 +1,897 @@
+// Prisma schema for Adaptive Learning Tutor
+// This defines the complete ERD and database tables
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// Core Account and Profile Entities
+// ============================================================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String?
+  name          String?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  learnerProfile LearnerProfile?
+  sessions       Session[]
+  attempts       Attempt[]
+  mistakeRecords MistakeRecord[]
+  usageRecords   UsageRecord[]
+
+  @@map("users")
+}
+
+model LearnerProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Target selection
+  targetExam      String   // EBA only, WA only, combined, KA-EBA, KA-EFZ
+  targetOccupation String?
+  studyPlanId     String?
+  preferredSecondLanguage String?
+  intendedExamDate String?
+
+  // Preferences
+  minutesPerDay   Int      @default(15)
+  interfaceLanguage String @default("en") // en, de, fa
+  explanationLanguage String @default("en")
+  immersionLevel   Int      @default(1) // 1-3
+  germanOnlyExamMode Boolean @default(false)
+
+  // Weak areas (comma-separated skill IDs)
+  weakAreas       String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  studyPlan       StudyPlan?
+
+  @@map("learner_profiles")
+}
+
+model StudyPlan {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  learnerProfile  LearnerProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Domains
+  ebaDomains      String?  // JSON array of domain IDs
+  waDomains       String?  // JSON array of domain IDs
+  kaEbaDomains    String?  // JSON array of domain IDs
+  kaEfzDomains    String?  // JSON array of domain IDs
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("study_plans")
+}
+
+// ============================================================================
+// Language Preferences
+// ============================================================================
+
+model LanguagePreference {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  language  String   // de, en, fa
+  enabled   Boolean  @default(true)
+  priority  Int      @default(0) // 0 = lowest, higher = preferred
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("language_preferences")
+}
+
+// ============================================================================
+// Target Configuration
+// ============================================================================
+
+model TargetExam {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+
+  // Timeline
+  examDate    DateTime?
+
+  // Scoring
+  passingScore Float?
+  maxScore    Float?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("target_exams")
+}
+
+model TargetOccupation {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  title       String?
+  isActive    Boolean  @default(true)
+
+  // Certification level
+  level       String?  // EBA, EFZ, KA, WA, etc.
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("target_occupations")
+}
+
+// ============================================================================
+// Curriculum and Provenance
+// ============================================================================
+
+model CurriculumSource {
+  id          String   @id @default(cuid())
+  title       String
+  url         String?
+  accessDate  DateTime @default(now())
+  claimStatus String   @default("inferred") // official-confirmed, official-general, inferred
+  sourceType  String   @default("official") // official, inferred, user-generated
+
+  // Review
+  reviewerId  String?
+  reviewedAt  DateTime?
+  reviewedBy  String?  // user ID
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("curriculum_sources")
+}
+
+model CurriculumVersion {
+  id          String   @id @default(cuid())
+  sourceId    String
+  source      CurriculumSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  version     String   // Semantic versioning: major.minor.patch
+  name        String
+  description String?
+
+  // Release workflow
+  releaseStatus String @default("draft") // draft, released, rejected, superseded
+  reviewerId  String?
+  reviewedAt  DateTime?
+  reviewedBy  String?
+
+  // Scope
+  domainIds   String?  // JSON array of domain IDs
+  skillIds    String?  // JSON array of skill IDs
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("curriculum_versions")
+}
+
+// ============================================================================
+// Domain and Skill Graph
+// ============================================================================
+
+model Domain {
+  id          String   @id @default(cuid())
+  code        String   @unique // ZH-5-0, etc.
+  name        String
+  category    String?  // mathematics, german, logic
+
+  // Mapping to official sources
+  sourceId    String?
+  mappingStatus String @default("inferred") // official-confirmed, official-general, inferred
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  skills      Skill[]
+
+  @@map("domains")
+}
+
+model Skill {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  domainId        String
+  domain          Domain   @relation(fields: [domainId], references: [id], onDelete: Cascade)
+
+  // Dependencies
+  prerequisiteIds String?  // JSON array of skill IDs
+  prerequisiteSkills Skill[] @relation("SkillDependencies")
+
+  // Difficulty level
+  difficultyLevel Int     @default(1) // 1-5
+
+  // Release
+  versionId       String?
+  releaseStatus   String   @default("draft")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  learningObjectives LearningObjective[]
+  questions        QuestionTemplate[]
+  activities       Activity[]
+
+  @@map("skills")
+}
+
+model SkillDependency {
+  id        String   @id @default(cuid())
+  skillId   String
+  skill     Skill    @relation("SkillDependencies", fields: [skillId], references: [id], onDelete: Cascade)
+  dependsOn String   // Skill ID that this depends on
+  order     Int      @default(0)
+
+  @@unique([skillId, dependsOn])
+  @@map("skill_dependencies")
+}
+
+// ============================================================================
+// Learning Objectives and Content
+// ============================================================================
+
+model LearningObjective {
+  id          String   @id @default(cuid())
+  skillId     String
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  masteryCriteria String? // JSON object with criteria
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("learning_objectives")
+}
+
+model QuestionTemplate {
+  id          String   @id @default(cuid())
+  skillId     String
+  skill       Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  // Question structure
+  type        String   // multiple-choice, fill-in, calculation, reading, grammar
+  text        String
+  language    String   // de, en, fa
+  difficulty  Int      @default(1)
+
+  // Reference to source
+  sourceId    String?
+  source      CurriculumSource @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  // Release
+  versionId   String?
+  releaseStatus String @default("draft")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  generatedQuestions GeneratedQuestion[]
+
+  @@map("question_templates")
+}
+
+model GeneratedQuestion {
+  id          String   @id @default(cuid())
+  templateId  String
+  template    QuestionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  // Generation metadata
+  generatorModel    String   // Which model generated this
+  promptVersion     String   // Version of the generation prompt
+  generatedAt       DateTime @default(now())
+
+  // Target configuration
+  targetSkillId     String?
+  targetDifficulty  Int?
+
+  // Answer and validation
+  expectedAnswer    String?
+  rubric            String? // JSON object
+  validationStatus  String   @default("pending") // pending, passed, rejected
+  validationResult  String?  // JSON object with validation details
+
+  // Provenance
+  sourceId          String?
+  source            CurriculumSource @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  isOfficial        Boolean  @default(false)
+
+  // Usage tracking
+  hasBeenShown      Boolean  @default(false)
+  attemptCount      Int      @default(0)
+  correctCount      Int      @default(0)
+  incorrectCount    Int      @default(0)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  activities        Activity[]
+
+  @@map("generated_questions")
+}
+
+model Rubric {
+  id          String   @id @default(cuid())
+  questionId  String
+  question    QuestionTemplate @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+  criteria    String   // JSON object with criterion IDs and thresholds
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("rubrics")
+}
+
+model Activity {
+  id          String   @id @default(cuid())
+  questionId  String   @unique
+  question    GeneratedQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  // Activity configuration
+  type        String   // practice, mock-exam, diagnostic
+  mode        String   // study, exam
+  isAssisted  Boolean  @default(true) // Can use hints/translations
+  isTimed     Boolean  @default(false)
+
+  // Difficulty
+  difficulty  Int      @default(1)
+
+  // Release
+  versionId   String?
+  releaseStatus String @default("draft")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  attempts    Attempt[]
+
+  @@map("activities")
+}
+
+// ============================================================================
+// Attempt, Evidence, and Mastery
+// ============================================================================
+
+model Attempt {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  activityId      String
+  activity        Activity @relation(fields: [activityId], references: [id])
+
+  // Attempt state machine
+  state           String   @default("CREATED") // CREATED, PRESENTED, SUBMITTED, EVALUATING, CORRECT, PARTIAL, INCORRECT, UNGRADABLE
+  attemptVersion  Int      @default(0)
+
+  // Idempotency
+  requestId       String?  @unique // Client-generated request ID
+  attemptHash     String?  @unique // Hash of the answer for deduplication
+
+  // Answer data
+  answer          String?
+  answerType      String?  // text, numeric, multiple-choice
+  hintLevel       Int      @default(0) // 0-4
+
+  // Timing
+  presentedAt     DateTime?
+  submittedAt     DateTime?
+  responseTimeMs  Int?
+
+  // Result
+  evaluation      String?  // correct, partially_correct, incorrect, ungradable
+  confidence      Float?   // 0.0-1.0
+  errorCategory   String?  // error classification
+
+  // Evidence
+  evidenceCount   Int      @default(0)
+  masteryEstimate Float?  // 0.0-1.0
+  uncertainty     Float?   // 0.0-1.0 (uncertainty interval)
+  lastEvidenceAt  DateTime?
+
+  // Review schedule
+  nextReviewAt    DateTime?
+  reviewCount     Int      @default(0)
+
+  // Cancellation
+  cancelled       Boolean  @default(false)
+  cancelledAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  answers         AttemptAnswer[]
+  evaluations     AttemptEvaluation[]
+
+  @@map("attempts")
+}
+
+model AttemptAnswer {
+  id          String   @id @default(cuid())
+  attemptId   String
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  answerId    String?  // If from a template or generated question
+  questionId  String?  // For mapping
+  skillId     String?
+
+  // Answer data
+  content     String
+  isCorrect   Boolean?
+  score       Float?
+
+  createdAt   DateTime @default(now())
+
+  @@map("attempt_answers")
+}
+
+model AttemptEvaluation {
+  id          String   @id @default(cuid())
+  attemptId   String   @unique
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  rubricId    String?
+  rubric      Rubric?  @relation(fields: [rubricId], references: [id], onDelete: SetNull)
+
+  criterionId String
+  passed      Boolean
+  evidence    String
+
+  version     Int      @default(1)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("attempt_evaluations")
+}
+
+model MasteryState {
+  id          String   @id @default(cuid())
+  userId      String
+  skillId     String
+
+  // Mastery evidence
+  masteryEstimate Float @default(0.5) // 0.0-1.0
+  uncertainty   Float @default(0.5) // 0.0-1.0
+  evidenceCount Int  @default(0)
+
+  // History
+  lastEvidenceAt DateTime?
+
+  // Review tracking
+  nextReviewAt    DateTime?
+  reviewCount     Int  @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, skillId])
+  @@map("mastery_states")
+}
+
+model ReviewSchedule {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  skillId     String
+  nextReviewAt DateTime
+  reviewCount Int      @default(1)
+  reviewDate  DateTime @default(now()) // When this review was scheduled
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, skillId])
+  @@index([userId, nextReviewAt])
+  @@map("review_schedules")
+}
+
+// ============================================================================
+// Feedback, Hints, and Mistakes
+// ============================================================================
+
+model Feedback {
+  id          String   @id @default(cuid())
+  attemptId   String   @unique
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  whatWasCorrect String?
+  whatWasWrongOrMissing String?
+  why         String?
+  nextAction  String?  // retry_same, try_similar, teach_prerequisite, schedule_review, continue
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("feedbacks")
+}
+
+model HintUsage {
+  id          String   @id @default(cuid())
+  attemptId   String
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  hintLevel   Int      // 0-4
+  usedAt      DateTime @default(now())
+
+  @@unique([attemptId, hintLevel])
+  @@map("hint_usages")
+}
+
+model ErrorClassification {
+  id          String   @id @default(cuid())
+  attemptId   String   @unique
+  attempt     Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  category    String
+  subcategory String?
+  description String?
+
+  createdAt   DateTime @default(now())
+
+  @@map("error_classifications")
+}
+
+model MistakeRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // The original question
+  questionId  String?
+  questionText String?
+  skillId     String?
+  skillName   String?
+
+  // The learner's answer
+  learnerAnswer String
+  correctAnswer String? // If known
+
+  // Classification
+  errorCategory String
+  explanation  String?
+  prerequisite String?
+  nextReviewAt DateTime
+
+  // Clarity state
+  clarityState String   @default("clear") // clear, partly_clear, still_unclear
+  reviewCount  Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("mistake_records")
+}
+
+// ============================================================================
+// Sessions and Events
+// ============================================================================
+
+model Session {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type        String   // daily_session, study_mode, practice_mode, mock_exam
+  duration    Int?     // seconds
+
+  // Start/end times
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  events      SessionEvent[]
+
+  @@map("sessions")
+}
+
+model SessionEvent {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  type        String   // attempt_started, feedback_received, hint_used, etc.
+  occurredAt  DateTime @default(now())
+  data        String?  // JSON object with event details
+
+  createdAt   DateTime @default(now())
+
+  @@map("session_events")
+}
+
+// ============================================================================
+// Mock Exams
+// ============================================================================
+
+model MockExam {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+
+  // Structure
+  sections    String?  // JSON array of section IDs
+  totalQuestions Int?
+  timeLimit   Int?     // seconds per section
+
+  // Release
+  releaseStatus String @default("draft") // draft, released, rejected, superseded
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sections    MockExamSection[]
+
+  @@map("mock_exams")
+}
+
+model MockExamSection {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        MockExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+
+  title       String
+  questionCount Int?
+  timeLimit   Int?
+
+  // Order
+  order       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  attempts    MockExamAttempt[]
+
+  @@map("mock_exam_sections")
+}
+
+model MockExamAttempt {
+  id          String   @id @default(cuid())
+  examId      String
+  exam        MockExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sessionId   String
+  session     Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  // Progress
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  totalScore  Float?
+  maxScore    Float?
+
+  // Status
+  status      String   @default("in_progress") // in_progress, completed, failed, passed
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("mock_exam_attempts")
+}
+
+// ============================================================================
+// Provider Configuration and Credentials
+// ============================================================================
+
+model ProviderConfiguration {
+  id          String   @id @default(cuid())
+  name        String
+  providerType String  // hosted, openai-compatible, ollama, lm-studio, mock
+
+  // Connection settings
+  apiUrl      String?
+  apiKey      String
+  model       String?
+  timeout     Int      @default(30000)
+
+  // User settings
+  userId      String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  encryptedCredentials EncryptedCredential?
+
+  @@map("provider_configurations")
+}
+
+model EncryptedCredential {
+  id              String   @id @default(cuid())
+  providerId      String   @unique
+  provider        ProviderConfiguration @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  // Encrypted API keys and secrets
+  credentials     String
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("encrypted_credentials")
+}
+
+// ============================================================================
+// Connector and Pairing (for Milestone 12-13)
+// ============================================================================
+
+model ConnectorDevice {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  deviceId    String   @unique
+  deviceName  String?
+  deviceType  String?  // PC, Mac, iPhone, Android
+
+  // Connection
+  connectedAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  isConnected Boolean  @default(false)
+
+  // Security
+  isActive    Boolean  @default(true)
+  expiryDate  DateTime?
+  isPaired    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  pairedClients PairedClient[]
+
+  @@map("connector_devices")
+}
+
+model PairedClient {
+  id          String   @id @default(cuid())
+  deviceId    String
+  device      ConnectorDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  clientId    String   @unique
+  clientName  String?
+  origin      String?  // The web origin that's paired
+
+  // Pairing security
+  pairingToken String
+  pairingExpiresAt DateTime
+  isAuthorized Boolean @default(false)
+  lastUsedAt    DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("paired_clients")
+}
+
+// ============================================================================
+// Model Configuration
+// ============================================================================
+
+model ModelConfiguration {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name        String   @unique
+  providerType String
+  model       String?
+
+  // Capabilities
+  supportsStreaming Boolean  @default(false)
+  supportsStructuredOutput Boolean  @default(false)
+  supportsTools      Boolean  @default(false)
+  supportsVision     Boolean  @default(false)
+  supportsEmbeddings Boolean  @default(false)
+
+  // Context and cost
+  contextLimit   Int?  // Maximum context length in tokens
+  estimatedCost  String? // JSON object with per-token costs
+
+  // User configuration
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("model_configurations")
+}
+
+// ============================================================================
+// Usage Tracking
+// ============================================================================
+
+model UsageRecord {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Activity
+  activityId  String?
+  activity    Activity? @relation(fields: [activityId], references: [id], onDelete: SetNull)
+
+  // Metrics
+  attemptCount Int      @default(0)
+  correctCount Int      @default(0)
+  incorrectCount Int    @default(0)
+  skippedCount Int      @default(0)
+
+  // Timing
+  responseTimeMs Int?
+  totalTokensUsed Int?
+
+  // Provider usage
+  providerId   String?
+  provider     ProviderConfiguration? @relation(fields: [providerId], references: [id], onDelete: SetNull)
+
+  // Timestamp
+  recordedAt   DateTime @default(now())
+
+  @@map("usage_records")
+}
+
+// ============================================================================
+// Audit Events
+// ============================================================================
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  userId      String?  // NULL for system events
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Event details
+  eventType   String
+  resourceId  String?
+  resourceType String?
+
+  // Details
+  metadata    String?  // JSON object with additional context
+  ipAddress   String?
+  userAgent   String?
+
+  // Outcome
+  success     Boolean
+  errorMessage String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("audit_events")
+}

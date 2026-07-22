@@ -20,17 +20,17 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"],
-      "@/components/*": ["apps/web/components/*"],
-      "@/lib/*": ["apps/web/lib/*"],
-      "@/app/*": ["apps/web/app/*"],
-      "@/types/*": ["apps/web/types/*"],
-      "@adaptive/shared-schemas": ["./packages/shared-schemas/src"],
-      "@adaptive/learning-engine": ["./packages/learning-engine/src"],
-      "@adaptive/ai-gateway": ["./packages/ai-gateway/src"],
-      "@adaptive/config": ["./packages/config"]
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/types/*": ["./src/types/*"],
+      "@adaptive/shared-schemas": ["../../packages/shared-schemas/src"],
+      "@adaptive/learning-engine": ["../../packages/learning-engine/src"],
+      "@adaptive/ai-gateway": ["../../packages/ai-gateway/src"],
+      "@adaptive/config": ["../../packages/config"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "node_modules.broken-*", "**/.next", "**/dist"]
+  "exclude": ["node_modules"]
 }
